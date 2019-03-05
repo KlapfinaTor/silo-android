@@ -1,5 +1,5 @@
 package at.klapfinator.silo;
 
-public interface RemoteLogSender {
+public interface LogSender {
     public void pushLogs();
 }

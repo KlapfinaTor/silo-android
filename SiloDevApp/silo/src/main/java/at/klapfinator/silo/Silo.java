@@ -6,6 +6,8 @@ import android.util.Log;
 
 public final class Silo {
     private static final Silo ourInstance = new Silo();
+    private static final LogSaveData logSaver = new DBLogger();
+
     private boolean enableLogCatOutput = true;
     private boolean enableDBLogging = true;
     private boolean enableRemoteLogging = true;
