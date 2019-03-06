@@ -18,7 +18,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
-        Silo logger = Silo.getInstance();
+        final Silo logger = Silo.getInstance();
+        logger.initialize(MainActivity.this);
+        logger.log(2, "DERTAG", "messagetest", null);
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -27,9 +29,10 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                logger.log(2, "Silo", "button clicked", null);
             }
         });
-        logger.log(2,"DERTAG","messagetest",null);
+
     }
 
     @Override
