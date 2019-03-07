@@ -5,6 +5,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public final class Silo {
     private static final Silo ourInstance = new Silo();
 
@@ -12,16 +17,15 @@ public final class Silo {
     private boolean enableDBLogging = true;
     private boolean enableRemoteLogging = true;
 
-    private static final String TAG = "Silo";
-    private static final int DEFAULT_LOG_EXPIRY_TIME = 7 * 24 * 60 * 60; // 7 Days
-    private static Context context;
+    private final String TAG = "Silo";
+    private final int DEFAULT_LOG_EXPIRY_TIME = 7 * 24 * 60 * 60; // 7 Days
+    private Context context;
+    private ExecutorService executorService;
 
     public static Silo getInstance() {
         return ourInstance;
     }
 
-    private Silo() {
-    }
 
     public void initialize(@NonNull Context context) {
         initialize(context, DEFAULT_LOG_EXPIRY_TIME);
@@ -33,32 +37,61 @@ public final class Silo {
             return;
         }
 
-        Silo.context = context.getApplicationContext();
+        this.context = context.getApplicationContext();
 
     }
 
     public void log(int priority, @Nullable String tag, @Nullable final String message, @Nullable Throwable throwable) {
         //save to db
 
-        if(enableLogCatOutput){
-            Log.d(tag,message);
+        if (enableLogCatOutput) {
+            Log.d(tag, message);
         }
 
         saveToDatabase(message);
 
         // DELETME print all inserted logs
-        Thread t1 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-                Log.d(TAG, dao.getAllLogs().toString());
-            }
-        });
-        t1.start();
+
 
     }
 
+    public List<DeviceLogData> getAllLogsAsList() {
+        if (executorService == null)
+            executorService = Executors.newSingleThreadExecutor();
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                    List<DeviceLogData> logsList = dao.getAllLogs();
+
+                    for (DeviceLogData log : logsList) {
+                        Log.i(TAG, log.getId() + "|" + log.getMessage() + "|" + log.getDateLogged());
+                    }
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        };
+
+        executorService.submit(runnable);
+        //FIXME
+        return null;
+    }
+
+    private boolean isSiloInitialized() {
+        if (context == null)
+            return false;
+        else
+            return true;
+    }
+
     private void saveToDatabase(final String message) {
+        if (message == null)
+            return;
+
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -75,7 +108,7 @@ public final class Silo {
     }
 
     public void d(@NonNull String message, @Nullable Object... args) {
-       //save to db
+        //save to db
 
         if (enableLogCatOutput) {
             Log.d(TAG, message);

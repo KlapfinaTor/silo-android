@@ -16,6 +16,9 @@ public interface DeviceLogDataDao {
     @Query("SELECT * FROM DeviceLogData WHERE id = :id")
     DeviceLogData getLogById(int id);
 
+    @Query("SELECT count(*) FROM DeviceLogData")
+    int count();
+
     @Insert
     void insert(DeviceLogData dld);
 

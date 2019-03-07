@@ -11,10 +11,10 @@ public class DeviceLogData {
     private long id;
 
     @ColumnInfo(name = "message")
-    String message;
+    private String message;
 
     @ColumnInfo(name = "dateLogged")
-    String dateLogged;
+    private String dateLogged;
 
     void setMessage(String message) {
         this.message = message;
