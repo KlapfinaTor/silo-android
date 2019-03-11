@@ -5,57 +5,38 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class Silo {
-    private static final Silo ourInstance = new Silo();
+    private static boolean logCatOutputEnabled = true;
+    private static boolean dBLoggingEnabled = true;
+    private static boolean remoteLoggingEnabled = true;
 
-    private boolean enableLogCatOutput = true;
-    private boolean enableDBLogging = true;
-    private boolean enableRemoteLogging = true;
-
-    private final String TAG = "Silo";
-    private final int DEFAULT_LOG_EXPIRY_TIME = 7 * 24 * 60 * 60; // 7 Days
-    private Context context;
-    private ExecutorService executorService;
-
-    public static Silo getInstance() {
-        return ourInstance;
-    }
+    private static final String TAG = "Silo";
+    private static final int DEFAULT_LOG_EXPIRY_TIME = 7 * 24 * 60 * 60; // 7 Days
+    private static Context context;
+    private static ExecutorService executorService;
 
 
-    public void initialize(@NonNull Context context) {
+    public static void initialize(@NonNull Context context) {
         initialize(context, DEFAULT_LOG_EXPIRY_TIME);
     }
 
-    public void initialize(@NonNull Context context, int logExpiryTimeInSeconds) {
-        if (context == null) {
-            Log.e(TAG, "Silo isn't initialized: Context couldn't be null");
-            return;
-        }
-
-        this.context = context.getApplicationContext();
-
+    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds) {
+        Silo.context = context.getApplicationContext();
     }
 
-    public void log(int priority, @Nullable String tag, @Nullable final String message, @Nullable Throwable throwable) {
-        //save to db
-
-        if (enableLogCatOutput) {
+    public static void log(int priority, @Nullable String tag, @Nullable final String message, @Nullable Throwable throwable) {
+        if (logCatOutputEnabled) {
             Log.d(tag, message);
         }
-
-        saveToDatabase(message);
-
-        // DELETME print all inserted logs
-
-
+        saveToDatabase(LogFormatHelper.getFormatedLogString(priority, tag, message));
     }
 
-    public List<DeviceLogData> getAllLogsAsList() {
+
+    public static List<DeviceLogData> getAllLogsAsList() {
         if (executorService == null)
             executorService = Executors.newSingleThreadExecutor();
 
@@ -77,45 +58,50 @@ public final class Silo {
         };
 
         executorService.submit(runnable);
-        //FIXME
+        //FIXME RETURN LIST
         return null;
     }
 
-    private boolean isSiloInitialized() {
-        if (context == null)
+    private static boolean isSiloInitialized() {
+        if (Silo.context == null) {
+            Log.e(TAG, "Silo isn't initialized: Context couldn't be null");
             return false;
-        else
+        } else
             return true;
     }
 
-    private void saveToDatabase(final String message) {
+
+    private static void saveToDatabase(final String message) {
+        if (!isSiloInitialized())
+            return;
+
         if (message == null)
             return;
 
+        //TODO threading pass values to threads and return callback
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
                 DeviceLogData logData = new DeviceLogData();
-                logData.setMessage(message.toString());
+                logData.setMessage(message);
                 logData.setDateLogged("12345");
 
                 DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
                 dao.insert(logData);
-                Log.d(TAG, "Insert into database complete: " + message.toString());
+                Log.d(TAG, "Insert into database complete: " + message);
             }
         });
         t1.start();
     }
 
-    public void d(@NonNull String message, @Nullable Object... args) {
-        //save to db
-
-        if (enableLogCatOutput) {
+    public static void d(@NonNull String message, @Nullable Object... args) {
+        if (logCatOutputEnabled) {
             Log.d(TAG, message);
         }
+        log(1, null, message, null);
     }
 
-    public void push() {
+    public static void push() {
         //send logs from db to message broker or http depending on the setting
     }
 

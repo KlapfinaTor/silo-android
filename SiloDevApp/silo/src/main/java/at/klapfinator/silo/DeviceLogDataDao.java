@@ -28,6 +28,6 @@ public interface DeviceLogDataDao {
     @Delete
     void delete(DeviceLogData dld);
 
-    @Query("DELETE FROM DeviceLogData WHERE 1=1")
+    @Query("DELETE FROM DeviceLogData")
     void deleteAllLogs();
 }
