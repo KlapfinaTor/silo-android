@@ -9,25 +9,31 @@ import java.sql.Timestamp;
 import java.util.Locale;
 
 
-public class LogFormatHelper {
+class LogFormatHelper {
+    private String androidId;
 
-    private static String androidId;
-
-    public LogFormatHelper(Context context) {
+    LogFormatHelper(Context context) {
         Context mContext = context.getApplicationContext();
         // FIXME
-        LogFormatHelper.androidId = Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
+        androidId = Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
-    public static String getFormatedLogString(int logLevel, String tag, String message) {
+    String getFormattedLogString(int logLevel, String tag, String message) {
         Timestamp time = new Timestamp(System.currentTimeMillis());
         Long timeStamp = time.getTime();
-        String deviceName = BuildConfig.VERSION_NAME;
+        String appVersionName = BuildConfig.VERSION_NAME;
+        int appVersion = BuildConfig.VERSION_CODE;
+        String appId = BuildConfig.APPLICATION_ID;
         String osVersion = "Android-" + Build.VERSION.RELEASE;
         String logLevelString = getLogLevelName(logLevel);
         String currentDeviceLanguage = Locale.getDefault().getDisplayLanguage();
 
-        return String.format("%d | %s | %s | %s | [%s]: %s ", timeStamp, currentDeviceLanguage, deviceName, osVersion, logLevelString, message);
+        if (androidId == null) {
+            androidId = "android_id_not_set";
+        }
+
+        return String.format("%d | %s | %s | %s | %s | %s | [%s / %s]: %s",
+                timeStamp, androidId, appId, appVersionName, currentDeviceLanguage, osVersion, logLevelString, tag, message);
     }
 
     private static String getLogLevelName(int logLevel) {

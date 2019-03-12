@@ -11,28 +11,30 @@ import java.util.concurrent.Executors;
 
 public final class Silo {
     private static boolean logCatOutputEnabled = true;
-    private static boolean dBLoggingEnabled = true;
-    private static boolean remoteLoggingEnabled = true;
 
     private static final String TAG = "Silo";
     private static final int DEFAULT_LOG_EXPIRY_TIME = 7 * 24 * 60 * 60; // 7 Days
     private static Context context;
     private static ExecutorService executorService;
+    private static LogSender logSender;
+    private static LogFormatHelper logFormatHelper;
 
 
     public static void initialize(@NonNull Context context) {
-        initialize(context, DEFAULT_LOG_EXPIRY_TIME);
+        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), null);
     }
 
-    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds) {
+    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds, LogFormatHelper logFormatHelper, LogSender logSender) {
         Silo.context = context.getApplicationContext();
+        Silo.logSender = logSender;
+        Silo.logFormatHelper = logFormatHelper;
     }
 
     public static void log(int priority, @Nullable String tag, @Nullable final String message, @Nullable Throwable throwable) {
         if (logCatOutputEnabled) {
             Log.d(tag, message);
         }
-        saveToDatabase(LogFormatHelper.getFormatedLogString(priority, tag, message));
+        saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
     }
 
 
@@ -78,7 +80,6 @@ public final class Silo {
         if (message == null)
             return;
 
-        //TODO threading pass values to threads and return callback
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -102,7 +103,12 @@ public final class Silo {
     }
 
     public static void push() {
+        if (Silo.logSender == null) {
+            Log.e(TAG, "No LogSender initialized!");
+            return;
+        }
+
+        logSender.pushLogs();
         //send logs from db to message broker or http depending on the setting
     }
-
 }

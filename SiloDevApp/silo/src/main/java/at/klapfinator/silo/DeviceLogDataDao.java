@@ -30,4 +30,7 @@ public interface DeviceLogDataDao {
 
     @Query("DELETE FROM DeviceLogData")
     void deleteAllLogs();
+
+    //@Query("DELETE FROM DeviceLogData WHERE dateLogged < FIXME")
+    //void deleteOldLogs();
 }
