@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
         //final Silo logger = new Silo();
         Silo.initialize(MainActivity.this);
         Silo.log(2, "Silo", "messagetest", null);
-        Silo.getAllLogsAsList();
+        Silo.push();
 
         setSupportActionBar(toolbar);
 

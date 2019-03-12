@@ -14,13 +14,13 @@ public class DeviceLogData {
     private String message;
 
     @ColumnInfo(name = "dateLogged")
-    private String dateLogged;
+    private long dateLogged;
 
     void setMessage(String message) {
         this.message = message;
     }
 
-    void setDateLogged(String dateLogged) {
+    void setDateLogged(long dateLogged) {
         this.dateLogged = dateLogged;
     }
 
@@ -32,7 +32,7 @@ public class DeviceLogData {
         return message;
     }
 
-    public String getDateLogged() {
+    public long getDateLogged() {
         return dateLogged;
     }
 

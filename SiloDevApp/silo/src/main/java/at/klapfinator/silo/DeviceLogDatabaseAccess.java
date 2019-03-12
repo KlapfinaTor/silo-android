@@ -9,6 +9,7 @@ public class DeviceLogDatabaseAccess {
 
     public DeviceLogDatabaseAccess(Context context) {
         this.database = Room.databaseBuilder(context, DeviceLogDatabase.class, DeviceLogDatabase.DATABASE_NAME)
+                .fallbackToDestructiveMigration() //TODO handle migration
                 .build();
     }
 

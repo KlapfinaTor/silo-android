@@ -1,13 +1,13 @@
 package at.klapfinator.silo;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.sql.Timestamp;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class Silo {
     private static boolean logCatOutputEnabled = true;
@@ -15,13 +15,13 @@ public final class Silo {
     private static final String TAG = "Silo";
     private static final int DEFAULT_LOG_EXPIRY_TIME = 7 * 24 * 60 * 60; // 7 Days
     private static Context context;
-    private static ExecutorService executorService;
     private static LogSender logSender;
     private static LogFormatHelper logFormatHelper;
 
 
     public static void initialize(@NonNull Context context) {
-        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), null);
+        logSender = new HttpSender();
+        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), logSender);
     }
 
     public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds, LogFormatHelper logFormatHelper, LogSender logSender) {
@@ -30,38 +30,10 @@ public final class Silo {
         Silo.logFormatHelper = logFormatHelper;
     }
 
-    public static void log(int priority, @Nullable String tag, @Nullable final String message, @Nullable Throwable throwable) {
-        if (logCatOutputEnabled) {
-            Log.d(tag, message);
-        }
-        saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
-    }
 
-
-    public static List<DeviceLogData> getAllLogsAsList() {
-        if (executorService == null)
-            executorService = Executors.newSingleThreadExecutor();
-
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-                    List<DeviceLogData> logsList = dao.getAllLogs();
-
-                    for (DeviceLogData log : logsList) {
-                        Log.i(TAG, log.getId() + "|" + log.getMessage() + "|" + log.getDateLogged());
-                    }
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        };
-
-        executorService.submit(runnable);
-        //FIXME RETURN LIST
-        return null;
+    private static List<DeviceLogData> getAllLogsAsList() {
+        DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+        return dao.getAllLogs();
     }
 
     private static boolean isSiloInitialized() {
@@ -83,23 +55,23 @@ public final class Silo {
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
+                Timestamp time = new Timestamp(System.currentTimeMillis());
+                long timeStamp = time.getTime();
                 DeviceLogData logData = new DeviceLogData();
                 logData.setMessage(message);
-                logData.setDateLogged("12345");
+                logData.setDateLogged(timeStamp);
 
-                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-                dao.insert(logData);
+                try {
+                    DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                    dao.insert(logData);
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error while inserting into database: " + ex.toString());
+                }
+
                 Log.d(TAG, "Insert into database complete: " + message);
             }
         });
         t1.start();
-    }
-
-    public static void d(@NonNull String message, @Nullable Object... args) {
-        if (logCatOutputEnabled) {
-            Log.d(TAG, message);
-        }
-        log(1, null, message, null);
     }
 
     public static void push() {
@@ -108,7 +80,34 @@ public final class Silo {
             return;
         }
 
-        logSender.pushLogs();
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                // get data
+                List<DeviceLogData> logsList = Silo.getAllLogsAsList();
+
+                logSender.pushLogs(logsList);
+            }
+        });
+
+
+        Log.i(TAG, "Push called!");
         //send logs from db to message broker or http depending on the setting
+    }
+
+    public static void log(int priority, @Nullable String tag, @Nullable final String message, @Nullable Throwable throwable) {
+        if (logCatOutputEnabled) {
+            Log.d(tag, message);
+        }
+
+        saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
+    }
+
+    public static void d(@NonNull String message, @Nullable Object... args) {
+        if (logCatOutputEnabled) {
+            Log.d(TAG, message);
+        }
+
+        log(1, null, message, null);
     }
 }
