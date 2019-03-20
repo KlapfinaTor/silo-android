@@ -8,11 +8,12 @@ class HttpSender implements LogSender {
     private static final String TAG = "Silo";
 
     @Override
-    public void pushLogs(List<DeviceLogData> logDataList) {
+    public boolean pushLogs(List<DeviceLogData> logDataList) {
         Log.i(TAG, "Pushing Logs!");
         for (DeviceLogData log : logDataList) {
             Log.i(TAG, log.getId() + "|" + log.getMessage() + "|" + log.getDateLogged());
         }
         Log.i(TAG, "Logs pushed!");
+        return true;
     }
 }

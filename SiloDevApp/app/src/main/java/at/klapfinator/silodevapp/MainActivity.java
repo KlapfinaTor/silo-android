@@ -19,9 +19,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
 
-        //final Silo logger = new Silo();
         Silo.initialize(MainActivity.this);
-        Silo.log(2, "Silo", "messagetest", null);
+        Silo.log(2, "Silo", "messagetest", null, true);
         Silo.push();
 
         setSupportActionBar(toolbar);
@@ -32,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                Silo.log(2, "Silo", "button clicked", null);
+                Silo.info("Button clicked");
             }
         });
 

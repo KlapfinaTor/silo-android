@@ -86,28 +86,37 @@ public final class Silo {
                 // get data
                 List<DeviceLogData> logsList = Silo.getAllLogsAsList();
 
-                logSender.pushLogs(logsList);
+                if (logSender.pushLogs(logsList)) {
+                    //TODO delete pushed logs from database!
+                    Log.i(TAG, "Logs successfully pushed!");
+                }
             }
         });
 
 
-        Log.i(TAG, "Push called!");
+        //Log.i(TAG, "Push called!");
         //send logs from db to message broker or http depending on the setting
     }
 
-    public static void log(int priority, @Nullable String tag, @Nullable final String message, @Nullable Throwable throwable) {
-        if (logCatOutputEnabled) {
-            Log.d(tag, message);
+    public static void log(int priority, @Nullable String tag, @NonNull final String message, @Nullable Throwable throwable, Boolean shouldBeSavedToDB) {
+        if (!shouldBeSavedToDB || logCatOutputEnabled) {
+            Log.println(priority, tag, message);
         }
 
-        saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
+        if (shouldBeSavedToDB) {
+            saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
+        }
     }
 
-    public static void d(@NonNull String message, @Nullable Object... args) {
-        if (logCatOutputEnabled) {
-            Log.d(TAG, message);
-        }
+    public static void info(@NonNull String message, @NonNull Boolean shouldBeSavedToDB) {
+        Silo.log(4, TAG, message, null, shouldBeSavedToDB);
+    }
 
-        log(1, null, message, null);
+    public static void info(@NonNull String message) {
+        Silo.log(4, TAG, message, null, true);
+    }
+
+    public static void d(@NonNull String message, @Nullable Throwable throwable) {
+        Silo.log(1, null, message, throwable, true);
     }
 }
