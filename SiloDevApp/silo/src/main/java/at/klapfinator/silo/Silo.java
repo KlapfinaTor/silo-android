@@ -17,17 +17,25 @@ public final class Silo {
     private static Context context;
     private static LogSender logSender;
     private static LogFormatHelper logFormatHelper;
+    private static int logExpiryTimeInSeconds;
+    private static String url;
 
 
-    public static void initialize(@NonNull Context context) {
-        logSender = new HttpSender();
-        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), logSender);
+    private Silo() {
+        // none
     }
 
-    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds, LogFormatHelper logFormatHelper, LogSender logSender) {
+    public static void initialize(@NonNull Context context) {
+
+        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), logSender, true);
+    }
+
+    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds, LogFormatHelper logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled) {
         Silo.context = context.getApplicationContext();
         Silo.logSender = logSender;
         Silo.logFormatHelper = logFormatHelper;
+        Silo.logCatOutputEnabled = logCatOutputEnabled;
+        Silo.logExpiryTimeInSeconds = logExpiryTimeInSeconds;
     }
 
 
@@ -45,20 +53,27 @@ public final class Silo {
     }
 
 
-    private static void saveToDatabase(final String message) {
+    private static void saveToDatabase(String message) {
         if (!isSiloInitialized())
             return;
 
         if (message == null)
             return;
 
-        Thread t1 = new Thread(new Runnable() {
+
+        class SaveToDbTask implements Runnable {
+            private String msg;
+
+            private SaveToDbTask(String message) {
+                msg = message;
+            }
+
             @Override
             public void run() {
                 Timestamp time = new Timestamp(System.currentTimeMillis());
                 long timeStamp = time.getTime();
                 DeviceLogData logData = new DeviceLogData();
-                logData.setMessage(message);
+                logData.setMessage(msg);
                 logData.setDateLogged(timeStamp);
 
                 try {
@@ -68,16 +83,23 @@ public final class Silo {
                     Log.e(TAG, "Error while inserting into database: " + ex.toString());
                 }
 
-                Log.d(TAG, "Insert into database complete: " + message);
+                Log.d(TAG, "Insert into database complete: " + msg);
             }
-        });
-        t1.start();
+        }
+        Thread t = new Thread(new SaveToDbTask(message));
+        t.start();
     }
 
     public static void push() {
-        if (Silo.logSender == null) {
-            Log.e(TAG, "No LogSender initialized!");
+        //send logs from db to message broker or http depending on the setting
+        if (url == null) {
+            Log.e(TAG, "URL is null!", new Exception("No URL specified!"));
             return;
+        }
+
+        if (Silo.logSender == null) {
+            logSender = new HttpSender(url, context);
+            Log.e(TAG, "Http LogSender initialized!");
         }
 
         AsyncTask.execute(new Runnable() {
@@ -86,37 +108,49 @@ public final class Silo {
                 // get data
                 List<DeviceLogData> logsList = Silo.getAllLogsAsList();
 
-                if (logSender.pushLogs(logsList)) {
+                logSender.pushLogs(logsList);
                     //TODO delete pushed logs from database!
-                    Log.i(TAG, "Logs successfully pushed!");
-                }
+                //Log.i(TAG, "Logs successfully pushed!");
+
             }
         });
-
-
-        //Log.i(TAG, "Push called!");
-        //send logs from db to message broker or http depending on the setting
     }
 
-    public static void log(int priority, @Nullable String tag, @NonNull final String message, @Nullable Throwable throwable, Boolean shouldBeSavedToDB) {
-        if (!shouldBeSavedToDB || logCatOutputEnabled) {
+    public static void log(int priority, @Nullable String tag, @NonNull final String message, @Nullable Throwable throwable) {
+        if (logCatOutputEnabled) {
             Log.println(priority, tag, message);
         }
-
-        if (shouldBeSavedToDB) {
-            saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
-        }
+        saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
     }
 
-    public static void info(@NonNull String message, @NonNull Boolean shouldBeSavedToDB) {
-        Silo.log(4, TAG, message, null, shouldBeSavedToDB);
+    //Info
+    public static void i(@NonNull String message, @Nullable Throwable throwable) {
+        Silo.log(4, TAG, message, throwable);
     }
 
-    public static void info(@NonNull String message) {
-        Silo.log(4, TAG, message, null, true);
+    public static void i(@NonNull String message) {
+        Silo.log(4, TAG, message, null);
     }
+
+    public static void i(String tag, @NonNull String message, @Nullable Throwable throwable) {
+        Silo.log(4, tag, message, throwable);
+    }
+
+    public static void i(String tag, @NonNull String message) {
+        Silo.log(4, tag, message, null);
+    }
+
 
     public static void d(@NonNull String message, @Nullable Throwable throwable) {
-        Silo.log(1, null, message, throwable, true);
+        Silo.log(1, null, message, throwable);
+    }
+
+    public static void send(String message) {
+        saveToDatabase(logFormatHelper.getFormattedLogString(1, TAG, message));
+
+    }
+
+    public static void setUrl(String url) {
+        Silo.url = url;
     }
 }

@@ -8,7 +8,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 
+import at.klapfinator.silo.LogFormatHelper;
 import at.klapfinator.silo.Silo;
 
 public class MainActivity extends AppCompatActivity {
@@ -16,22 +18,39 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
 
+        //Silo
         Silo.initialize(MainActivity.this);
-        Silo.log(2, "Silo", "messagetest", null, true);
-        Silo.push();
+        Silo.setUrl("http://requestbin.fullcontact.com/1bslshq1");
+        Silo.i("Messaaggee");
 
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        setContentView(R.layout.activity_main);
+
+        Button btnSendDirectLog = findViewById(R.id.btn_sendDirectLog);
+        Button btnGenerateLog = findViewById(R.id.btn_generateLog);
+        Button btnPushLogs = findViewById(R.id.btn_pushLogs);
+
+        //LogFormatHelper logFormatHelper = new LogFormatHelper(this)
+
+        btnGenerateLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                Silo.info("Button clicked");
+                Silo.i("Button generateLog clicked");
+            }
+        });
+
+        btnSendDirectLog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Silo.send("Button sendDirectLog clicked");
+            }
+        });
+
+        btnPushLogs.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Silo.push();
             }
         });
 

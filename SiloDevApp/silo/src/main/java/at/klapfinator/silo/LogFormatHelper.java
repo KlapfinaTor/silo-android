@@ -9,10 +9,10 @@ import java.sql.Timestamp;
 import java.util.Locale;
 
 
-class LogFormatHelper {
+public class LogFormatHelper {
     private String androidId;
 
-    LogFormatHelper(Context context) {
+    public LogFormatHelper(Context context) {
         Context mContext = context.getApplicationContext();
         // FIXME
         androidId = Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
