@@ -38,4 +38,14 @@
         android:text="push logs"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_generateLog" />
+
+    <Button
+        android:id="@+id/btn_generateLogs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="68dp"
+        android:layout_marginTop="60dp"
+        android:text="Generate 10k logs"
+        app:layout_constraintStart_toEndOf="@+id/btn_pushLogs"
+        app:layout_constraintTop_toBottomOf="@+id/btn_sendDirectLog" />
 </android.support.constraint.ConstraintLayout>

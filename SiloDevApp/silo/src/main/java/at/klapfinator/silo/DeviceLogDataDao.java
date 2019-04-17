@@ -13,6 +13,9 @@ public interface DeviceLogDataDao {
     @Query("SELECT * FROM DeviceLogData")
     List<DeviceLogData> getAllLogs();
 
+    @Query("SELECT * FROM DeviceLogData ORDER BY id desc LIMIT :amount")
+    List<DeviceLogData> getSpecificAmountOfLogs(int amount);
+
     @Query("SELECT * FROM DeviceLogData WHERE id = :id")
     DeviceLogData getLogById(int id);
 
@@ -20,7 +23,7 @@ public interface DeviceLogDataDao {
     int count();
 
     @Insert
-    void insert(DeviceLogData dld);
+    long insert(DeviceLogData dld);
 
     @Update
     void update(DeviceLogData dld);

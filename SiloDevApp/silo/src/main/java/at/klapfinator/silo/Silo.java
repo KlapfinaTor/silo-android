@@ -44,27 +44,44 @@ public final class Silo {
         return dao.getAllLogs();
     }
 
+    private static List<DeviceLogData> getSpecificAmountOfLogsAsList(int amount) {
+        DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+        return dao.getSpecificAmountOfLogs(amount);
+    }
+
     private static boolean isSiloInitialized() {
         if (Silo.context == null) {
-            Log.e(TAG, "Silo isn't initialized: Context couldn't be null");
+            Log.e(TAG, "Silo isn't initialized: Context should not be null!");
             return false;
         } else
             return true;
     }
 
+    private static long saveLogMessageToDatabaseAsync(String message) {
+        PopulateDbAsync asyncTask = new PopulateDbAsync(new AsyncResponse() {
+            @Override
+            public void processFinish(Object output) {
+                Log.e(TAG, "Logmessage inserted into db, ID: " + output.toString());
+            }
+        }, context, message);
+        asyncTask.execute();
 
-    private static void saveToDatabase(String message) {
+        return 0;
+    }
+
+    //private static void
+
+    private static void saveLogMessageToDatabase(String message) throws ExceptionInInitializerError {
         if (!isSiloInitialized())
-            return;
+            throw new ExceptionInInitializerError("SILO is not initialized!");
 
         if (message == null)
-            return;
+            throw new ExceptionInInitializerError("No message provided!");
 
-
-        class SaveToDbTask implements Runnable {
+        class SaveToDbTaskHelper implements Runnable {
             private String msg;
 
-            private SaveToDbTask(String message) {
+            private SaveToDbTaskHelper(String message) {
                 msg = message;
             }
 
@@ -78,15 +95,18 @@ public final class Silo {
 
                 try {
                     DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-                    dao.insert(logData);
+                    long tmp = dao.insert(logData);
+                    Log.e(TAG, "" + tmp);
+                    //this.idFromInsertedRow = tmp;
                 } catch (Exception ex) {
                     Log.e(TAG, "Error while inserting into database: " + ex.toString());
                 }
 
                 Log.d(TAG, "Insert into database complete: " + msg);
+
             }
         }
-        Thread t = new Thread(new SaveToDbTask(message));
+        Thread t = new Thread(new SaveToDbTaskHelper(message));
         t.start();
     }
 
@@ -98,7 +118,7 @@ public final class Silo {
         }
 
         if (Silo.logSender == null) {
-            logSender = new HttpSender(url, context);
+            logSender = new HttpSender(url, context, true);
             Log.e(TAG, "Http LogSender initialized!");
         }
 
@@ -106,11 +126,11 @@ public final class Silo {
             @Override
             public void run() {
                 // get data
-                List<DeviceLogData> logsList = Silo.getAllLogsAsList();
+                List<DeviceLogData> logsList = Silo.getSpecificAmountOfLogsAsList(10);
 
                 logSender.pushLogs(logsList);
-                    //TODO delete pushed logs from database!
-                //Log.i(TAG, "Logs successfully pushed!");
+                //TODO delete pushed logs from database! Callback? then delete
+                Log.i(TAG, "Logs successfully pushed????");
 
             }
         });
@@ -120,7 +140,7 @@ public final class Silo {
         if (logCatOutputEnabled) {
             Log.println(priority, tag, message);
         }
-        saveToDatabase(logFormatHelper.getFormattedLogString(priority, tag, message));
+        saveLogMessageToDatabaseAsync(logFormatHelper.getFormattedLogString(priority, tag, message));
     }
 
     //Info
@@ -146,11 +166,27 @@ public final class Silo {
     }
 
     public static void send(String message) {
-        saveToDatabase(logFormatHelper.getFormattedLogString(1, TAG, message));
+        //saveLogMessageToDatabase(logFormatHelper.getFormattedLogString(1, TAG, message));
+        // List<DeviceLogData> tmpLog =  [""];
+        // tmpLog.add(message);
+        // logSender.pushLogs(tmpLog);
+
+        PopulateDbAsync asyncTask = new PopulateDbAsync(new AsyncResponse() {
+            @Override
+            public void processFinish(Object output) {
+                Log.e(TAG, "SendDirect result: " + output.toString());
+            }
+        }, context, message);
+        asyncTask.execute(message);
 
     }
 
     public static void setUrl(String url) {
         Silo.url = url;
+    }
+
+    static void deleteAllLogs() {
+        DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+        dao.deleteAllLogs();
     }
 }

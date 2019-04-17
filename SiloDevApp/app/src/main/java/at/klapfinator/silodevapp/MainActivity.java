@@ -21,17 +21,29 @@ public class MainActivity extends AppCompatActivity {
 
         //Silo
         Silo.initialize(MainActivity.this);
-        Silo.setUrl("http://requestbin.fullcontact.com/1bslshq1");
-        Silo.i("Messaaggee");
+        //Silo.setUrl("http://requestbin.fullcontact.com/1bslshq1");
+        Silo.setUrl("http://192.168.1.105:3000/index");
+        Silo.i("Silo test message 1");
 
 
         setContentView(R.layout.activity_main);
 
         Button btnSendDirectLog = findViewById(R.id.btn_sendDirectLog);
         Button btnGenerateLog = findViewById(R.id.btn_generateLog);
+        Button btnGenerateLogs = findViewById(R.id.btn_generateLogs);
         Button btnPushLogs = findViewById(R.id.btn_pushLogs);
 
         //LogFormatHelper logFormatHelper = new LogFormatHelper(this)
+
+        btnGenerateLogs.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                for (int i = 0; i < 1000; i++) {
+                    Silo.i("Button generateLog clicked" + i);
+                }
+
+            }
+        });
 
         btnGenerateLog.setOnClickListener(new View.OnClickListener() {
             @Override
