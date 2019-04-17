@@ -1,6 +1,7 @@
 package at.klapfinator.silo;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -30,16 +31,19 @@ class HttpSender implements LogSender {
 
     @Override
     public void pushLogs(List<DeviceLogData> logDataList) {
-        this.logDataList = logDataList;
+        //this.logDataList = logDataList;
 
         try {
-            final JSONObject paramJson = new JSONObject();
-            for (DeviceLogData log : logDataList) {
-                //Log.i(TAG, log.getId() + "|" + log.getMessage() + "|" + log.getDateLogged());
-                paramJson.put(String.valueOf(log.getId()), log.getMessage());
+            class StringRequestHelper extends StringRequest {
+                public List<DeviceLogData> tempData;
+
+                public StringRequestHelper(int method, String url, Response.Listener<String> listener, @Nullable Response.ErrorListener errorListener, List<DeviceLogData> data) {
+                    super(method, url, listener, errorListener);
+                    this.tempData = data;
+                }
             }
 
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, url, paramJson, new Response.Listener<String>() {
+            StringRequestHelper stringRequest = new StringRequestHelper(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String response) {
                     Log.e("Silo", "Response from http: " + response);
@@ -48,20 +52,16 @@ class HttpSender implements LogSender {
             }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    Log.e(TAG, "" + error);
+                    Log.e(TAG, "Error while sending logs with httpSender: " + error);
                 }
-            }) {
+            }, logDataList) {
                 @Override
                 protected Map<String, String> getParams() throws AuthFailureError {
                     Map<String, String> postMap = new HashMap<>();
-                    postMap.put("param1", "value1");
 
-                    //TODO json in hashmap convertieren
-                    for (DeviceLogData log : paramJson) {
-                        //Log.i(TAG, log.getId() + "|" + log.getMessage() + "|" + log.getDateLogged());
-                        paramJson.put(String.valueOf(log.getId()), log.getMessage());
+                    for (DeviceLogData log : tempData) {
+                        postMap.put(String.valueOf(log.getId()), log.getMessage());
                     }
-
                     return postMap;
                 }
             };
