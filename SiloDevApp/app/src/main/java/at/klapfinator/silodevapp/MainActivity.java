@@ -1,16 +1,11 @@
 package at.klapfinator.silodevapp;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
-
-import at.klapfinator.silo.LogFormatHelper;
 import at.klapfinator.silo.Silo;
 
 public class MainActivity extends AppCompatActivity {
@@ -21,10 +16,8 @@ public class MainActivity extends AppCompatActivity {
 
         //Silo
         Silo.initialize(MainActivity.this);
-        //Silo.setUrl("http://requestbin.fullcontact.com/1bslshq1");
         Silo.setUrl("http://192.168.1.105:3000/index");
         Silo.i("Silo test message 1");
-
 
         setContentView(R.layout.activity_main);
 
@@ -41,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
                 for (int i = 0; i < 1000; i++) {
                     Silo.i("Button generateLog clicked" + i);
                 }
-
             }
         });
 
@@ -65,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
                 Silo.push();
             }
         });
-
     }
 
     @Override

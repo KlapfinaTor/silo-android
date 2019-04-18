@@ -16,15 +16,13 @@ import java.util.concurrent.Future;
 
 public final class Silo {
     private static boolean logCatOutputEnabled = true;
-
     private static final String TAG = "Silo";
     private static final int DEFAULT_LOG_EXPIRY_TIME = 7 * 24 * 60 * 60; // 7 Days
     private static Context context;
     private static LogSender logSender;
     private static LogFormatHelper logFormatHelper;
-    private static int logExpiryTimeInSeconds;
     private static String url;
-    static int batchLogSize;
+    private static int batchLogSize;
 
 
     private Silo() {
@@ -33,15 +31,14 @@ public final class Silo {
 
     public static void initialize(@NonNull Context context) {
 
-        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), logSender, true, 20);
+        initialize(context, new LogFormatHelper(context), logSender, true, 20);
     }
 
-    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds, LogFormatHelper logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled, int batchLogSize) {
+    public static void initialize(@NonNull Context context, LogFormatHelper logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled, int batchLogSize) {
         Silo.context = context.getApplicationContext();
         Silo.logSender = logSender;
         Silo.logFormatHelper = logFormatHelper;
         Silo.logCatOutputEnabled = logCatOutputEnabled;
-        Silo.logExpiryTimeInSeconds = logExpiryTimeInSeconds;
         Silo.batchLogSize = batchLogSize;
     }
 
@@ -55,6 +52,14 @@ public final class Silo {
 
     public static void setUrl(String url) {
         Silo.url = url;
+    }
+
+    public static int getBatchLogSize() {
+        return batchLogSize;
+    }
+
+    public static void setBatchLogSize(int batchLogSize) {
+        Silo.batchLogSize = batchLogSize;
     }
 
     private static List<DeviceLogData> getSpecificAmountOfLogsAsList(final int amount) throws ExecutionException, InterruptedException {
@@ -83,7 +88,6 @@ public final class Silo {
         return future.get();
     }
 
-
     private static long insertLogIntoDb(final String logMessage) throws ExecutionException, InterruptedException {
         Callable<Long> callable = new Callable<Long>() {
             @Override
@@ -103,7 +107,13 @@ public final class Silo {
         return future.get();
     }
 
-
+    /**
+     * Delets specific logs
+     *
+     * @param logsToDelete a list of id's to delete
+     * @throws ExecutionException   Exception
+     * @throws InterruptedException Exception
+     */
     static void deleteLogs(final List<Long> logsToDelete) throws ExecutionException, InterruptedException {
         AsyncTask.execute(new Runnable() {
             @Override
@@ -116,22 +126,6 @@ public final class Silo {
             }
         });
     }
-
-    /* TODO fixme + add deleteall
-    private static void deleteLogById(final long logId) throws ExecutionException, InterruptedException {
-        Callable<> callable = new Callable<>() {
-            @Override
-            public Long call() throws Exception {
-
-                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-                return dao.deleteLogById(logId);
-            }
-        };
-
-        Future<> future = Executors.newSingleThreadExecutor().submit(callable);
-        future.get();
-    }
-    */
 
     public static void push() {
         if (!isSiloInitialized()) {

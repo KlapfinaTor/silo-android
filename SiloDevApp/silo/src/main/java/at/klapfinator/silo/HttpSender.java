@@ -44,6 +44,7 @@ class HttpSender implements LogSender {
         }
     }
 
+
     private void pushLogsAsJSON(List<DeviceLogData> logDataList) {
         JSONObject jsonData = new JSONObject();
         try {
@@ -60,10 +61,8 @@ class HttpSender implements LogSender {
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
+                            //FIXME error bei erhalt von string responses
                             Log.i("Silo", "Response from http: " + response);
-                            //TODO callback zurück an silo wenn ok, danach in silo logs löschen
-                            //Silo.deleteAllLogs();
-                            //Silo.deleteSpecificAmountOfLogs(Silo.batchLogSize);
                         }
                     },
                     new Response.ErrorListener() {
@@ -80,8 +79,6 @@ class HttpSender implements LogSender {
     }
 
     private void pushLogsAsString(final List<DeviceLogData> logDataList) {
-
-
         class StringRequestHelper extends StringRequest {
             public List<DeviceLogData> listData;
 
