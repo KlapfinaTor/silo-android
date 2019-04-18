@@ -13,11 +13,11 @@ public interface DeviceLogDataDao {
     @Query("SELECT * FROM DeviceLogData")
     List<DeviceLogData> getAllLogs();
 
-    @Query("SELECT * FROM DeviceLogData ORDER BY id desc LIMIT :amount")
+    @Query("SELECT * FROM DeviceLogData ORDER BY id ASC LIMIT :amount")
     List<DeviceLogData> getSpecificAmountOfLogs(int amount);
 
     @Query("SELECT * FROM DeviceLogData WHERE id = :id")
-    DeviceLogData getLogById(int id);
+    DeviceLogData getLogById(long id);
 
     @Query("SELECT count(*) FROM DeviceLogData")
     int count();
@@ -33,6 +33,9 @@ public interface DeviceLogDataDao {
 
     @Query("DELETE FROM DeviceLogData")
     void deleteAllLogs();
+
+    @Query("DELETE FROM DeviceLogData  WHERE id = :id")
+    void deleteLogById(long id);
 
     @Query("DELETE FROM DeviceLogData WHERE dateLogged < :expireTime")
     void deleteOldLogs(int expireTime);

@@ -7,7 +7,12 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public final class Silo {
     private static boolean logCatOutputEnabled = true;
@@ -19,6 +24,7 @@ public final class Silo {
     private static LogFormatHelper logFormatHelper;
     private static int logExpiryTimeInSeconds;
     private static String url;
+    static int batchLogSize;
 
 
     private Silo() {
@@ -27,26 +33,16 @@ public final class Silo {
 
     public static void initialize(@NonNull Context context) {
 
-        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), logSender, true);
+        initialize(context, DEFAULT_LOG_EXPIRY_TIME, new LogFormatHelper(context), logSender, true, 20);
     }
 
-    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds, LogFormatHelper logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled) {
+    public static void initialize(@NonNull Context context, int logExpiryTimeInSeconds, LogFormatHelper logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled, int batchLogSize) {
         Silo.context = context.getApplicationContext();
         Silo.logSender = logSender;
         Silo.logFormatHelper = logFormatHelper;
         Silo.logCatOutputEnabled = logCatOutputEnabled;
         Silo.logExpiryTimeInSeconds = logExpiryTimeInSeconds;
-    }
-
-
-    private static List<DeviceLogData> getAllLogsAsList() {
-        DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-        return dao.getAllLogs();
-    }
-
-    private static List<DeviceLogData> getSpecificAmountOfLogsAsList(int amount) {
-        DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-        return dao.getSpecificAmountOfLogs(amount);
+        Silo.batchLogSize = batchLogSize;
     }
 
     private static boolean isSiloInitialized() {
@@ -57,60 +53,91 @@ public final class Silo {
             return true;
     }
 
-    private static long saveLogMessageToDatabaseAsync(String message) {
-        PopulateDbAsync asyncTask = new PopulateDbAsync(new AsyncResponse() {
-            @Override
-            public void processFinish(Object output) {
-                Log.e(TAG, "Logmessage inserted into db, ID: " + output.toString());
-            }
-        }, context, message);
-        asyncTask.execute();
-
-        return 0;
+    public static void setUrl(String url) {
+        Silo.url = url;
     }
 
-    //private static void
-
-    private static void saveLogMessageToDatabase(String message) throws ExceptionInInitializerError {
-        if (!isSiloInitialized())
-            throw new ExceptionInInitializerError("SILO is not initialized!");
-
-        if (message == null)
-            throw new ExceptionInInitializerError("No message provided!");
-
-        class SaveToDbTaskHelper implements Runnable {
-            private String msg;
-
-            private SaveToDbTaskHelper(String message) {
-                msg = message;
-            }
-
+    private static List<DeviceLogData> getSpecificAmountOfLogsAsList(final int amount) throws ExecutionException, InterruptedException {
+        Callable<List<DeviceLogData>> callable = new Callable<List<DeviceLogData>>() {
             @Override
-            public void run() {
+            public List<DeviceLogData> call() throws Exception {
+                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                return dao.getSpecificAmountOfLogs(amount);
+            }
+        };
+
+        Future<List<DeviceLogData>> future = Executors.newSingleThreadExecutor().submit(callable);
+        return future.get();
+    }
+
+    private static List<DeviceLogData> getAllLogsAsList() throws ExecutionException, InterruptedException {
+        Callable<List<DeviceLogData>> callable = new Callable<List<DeviceLogData>>() {
+            @Override
+            public List<DeviceLogData> call() throws Exception {
+                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                return dao.getAllLogs();
+            }
+        };
+
+        Future<List<DeviceLogData>> future = Executors.newSingleThreadExecutor().submit(callable);
+        return future.get();
+    }
+
+
+    private static long insertLogIntoDb(final String logMessage) throws ExecutionException, InterruptedException {
+        Callable<Long> callable = new Callable<Long>() {
+            @Override
+            public Long call() throws Exception {
                 Timestamp time = new Timestamp(System.currentTimeMillis());
                 long timeStamp = time.getTime();
                 DeviceLogData logData = new DeviceLogData();
-                logData.setMessage(msg);
+                logData.setMessage(logMessage);
                 logData.setDateLogged(timeStamp);
 
-                try {
-                    DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-                    long tmp = dao.insert(logData);
-                    Log.e(TAG, "" + tmp);
-                    //this.idFromInsertedRow = tmp;
-                } catch (Exception ex) {
-                    Log.e(TAG, "Error while inserting into database: " + ex.toString());
-                }
-
-                Log.d(TAG, "Insert into database complete: " + msg);
-
+                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                return dao.insert(logData);
             }
-        }
-        Thread t = new Thread(new SaveToDbTaskHelper(message));
-        t.start();
+        };
+
+        Future<Long> future = Executors.newSingleThreadExecutor().submit(callable);
+        return future.get();
     }
 
+
+    static void deleteLogs(final List<Long> logsToDelete) throws ExecutionException, InterruptedException {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                for (Long log : logsToDelete) {
+                    dao.deleteLogById(log);
+                    Log.d(TAG, "Deleting Log with id: " + log);
+                }
+            }
+        });
+    }
+
+    /* TODO fixme + add deleteall
+    private static void deleteLogById(final long logId) throws ExecutionException, InterruptedException {
+        Callable<> callable = new Callable<>() {
+            @Override
+            public Long call() throws Exception {
+
+                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                return dao.deleteLogById(logId);
+            }
+        };
+
+        Future<> future = Executors.newSingleThreadExecutor().submit(callable);
+        future.get();
+    }
+    */
+
     public static void push() {
+        if (!isSiloInitialized()) {
+            Log.e(TAG, "Silo is not initialized!");
+            return;
+        }
         //send logs from db to message broker or http depending on the setting
         if (url == null) {
             Log.e(TAG, "URL is null!", new Exception("No URL specified!"));
@@ -118,7 +145,7 @@ public final class Silo {
         }
 
         if (Silo.logSender == null) {
-            logSender = new HttpSender(url, context, true);
+            logSender = new HttpSender(url, context, false);
             Log.e(TAG, "Http LogSender initialized!");
         }
 
@@ -126,12 +153,18 @@ public final class Silo {
             @Override
             public void run() {
                 // get data
-                List<DeviceLogData> logsList = Silo.getSpecificAmountOfLogsAsList(10);
-
+                List<DeviceLogData> logsList = null;
+                try {
+                    logsList = Silo.getSpecificAmountOfLogsAsList(50);
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                for (DeviceLogData log : logsList) {
+                    Log.e(TAG, "LogID: " + log.getId());
+                }
                 logSender.pushLogs(logsList);
-                //TODO delete pushed logs from database! Callback? then delete
-                Log.i(TAG, "Logs successfully pushed????");
-
             }
         });
     }
@@ -140,7 +173,13 @@ public final class Silo {
         if (logCatOutputEnabled) {
             Log.println(priority, tag, message);
         }
-        saveLogMessageToDatabaseAsync(logFormatHelper.getFormattedLogString(priority, tag, message));
+        try {
+            insertLogIntoDb(logFormatHelper.getFormattedLogString(priority, tag, message));
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     //Info
@@ -160,33 +199,52 @@ public final class Silo {
         Silo.log(4, tag, message, null);
     }
 
-
     public static void d(@NonNull String message, @Nullable Throwable throwable) {
         Silo.log(1, null, message, throwable);
     }
 
-    public static void send(String message) {
-        //saveLogMessageToDatabase(logFormatHelper.getFormattedLogString(1, TAG, message));
-        // List<DeviceLogData> tmpLog =  [""];
-        // tmpLog.add(message);
-        // logSender.pushLogs(tmpLog);
-
-        PopulateDbAsync asyncTask = new PopulateDbAsync(new AsyncResponse() {
+    public static DeviceLogData getLogById(final long logId) throws ExecutionException, InterruptedException {
+        Callable<DeviceLogData> callable = new Callable<DeviceLogData>() {
             @Override
-            public void processFinish(Object output) {
-                Log.e(TAG, "SendDirect result: " + output.toString());
+            public DeviceLogData call() throws Exception {
+                DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
+                return dao.getLogById(logId);
             }
-        }, context, message);
-        asyncTask.execute(message);
+        };
 
+        Future<DeviceLogData> future = Executors.newSingleThreadExecutor().submit(callable);
+        return future.get();
     }
 
-    public static void setUrl(String url) {
-        Silo.url = url;
-    }
 
-    static void deleteAllLogs() {
-        DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
-        dao.deleteAllLogs();
+    public static void send(final String message) {
+        //send logs from db to message broker or http depending on the setting
+        if (url == null) {
+            Log.e(TAG, "URL is null!", new Exception("No URL specified!"));
+            return;
+        }
+
+        if (Silo.logSender == null) {
+            logSender = new HttpSender(url, context, false);
+            Log.i(TAG, "Http LogSender initialized!");
+        }
+
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                // get data
+                List<DeviceLogData> logsList = new ArrayList<>();
+                try {
+                    DeviceLogData log = Silo.getLogById(insertLogIntoDb(logFormatHelper.getFormattedLogString(1, TAG, message)));
+                    logsList.add(log);
+
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                logSender.pushLogs(logsList);
+            }
+        });
     }
 }

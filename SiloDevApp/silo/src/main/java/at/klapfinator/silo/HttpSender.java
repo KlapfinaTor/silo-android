@@ -14,11 +14,14 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 class HttpSender implements LogSender {
     private static final String TAG = "Silo";
@@ -58,7 +61,9 @@ class HttpSender implements LogSender {
                         @Override
                         public void onResponse(JSONObject response) {
                             Log.i("Silo", "Response from http: " + response);
-                            Silo.deleteAllLogs();
+                            //TODO callback zurück an silo wenn ok, danach in silo logs löschen
+                            //Silo.deleteAllLogs();
+                            //Silo.deleteSpecificAmountOfLogs(Silo.batchLogSize);
                         }
                     },
                     new Response.ErrorListener() {
@@ -74,7 +79,9 @@ class HttpSender implements LogSender {
         }
     }
 
-    private void pushLogsAsString(List<DeviceLogData> logDataList) {
+    private void pushLogsAsString(final List<DeviceLogData> logDataList) {
+
+
         class StringRequestHelper extends StringRequest {
             public List<DeviceLogData> listData;
 
@@ -89,7 +96,18 @@ class HttpSender implements LogSender {
                 @Override
                 public void onResponse(String response) {
                     Log.i("Silo", "Response from http: " + response);
-                    Silo.deleteAllLogs();
+                    List<Long> logsToDelete = new ArrayList<>();
+
+                    for (DeviceLogData log : logDataList) {
+                        logsToDelete.add(log.getId());
+                    }
+                    try {
+                        Silo.deleteLogs(logsToDelete);
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }, new Response.ErrorListener() {
                 @Override
