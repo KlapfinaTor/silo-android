@@ -1,5 +1,6 @@
 package at.klapfinator.silo;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.provider.Settings;
@@ -12,9 +13,9 @@ import java.util.Locale;
 public class LogFormatHelper {
     private String androidId;
 
+    @SuppressLint("HardwareIds")
     public LogFormatHelper(Context context) {
         Context mContext = context.getApplicationContext();
-        // FIXME
         androidId = Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 

@@ -6,9 +6,16 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
+
+import java.util.concurrent.ExecutionException;
+
+import at.klapfinator.silo.LogFormatHelper;
 import at.klapfinator.silo.Silo;
 
 public class MainActivity extends AppCompatActivity {
+    TextView textViewCount;
+    Button btnViewLogCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,14 +32,16 @@ public class MainActivity extends AppCompatActivity {
         Button btnGenerateLog = findViewById(R.id.btn_generateLog);
         Button btnGenerateLogs = findViewById(R.id.btn_generateLogs);
         Button btnPushLogs = findViewById(R.id.btn_pushLogs);
+        btnViewLogCount = findViewById(R.id.btn_viewLogCount);
+        textViewCount = findViewById(R.id.textViewCount);
 
-        //LogFormatHelper logFormatHelper = new LogFormatHelper(this)
+        //LogFormatHelper logFormatHelper = new LogFormatHelper(this);
 
         btnGenerateLogs.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 for (int i = 0; i < 1000; i++) {
-                    Silo.i("Button generateLog clicked" + i);
+                    Silo.w("Button generateLog clicked" + i);
                 }
             }
         });
@@ -40,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         btnGenerateLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Silo.i("Button generateLog clicked");
+                Silo.w("Button generateLog clicked");
             }
         });
 
@@ -55,6 +64,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Silo.push();
+            }
+        });
+
+        btnViewLogCount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Silo.i("Button getCount clicked");
+                try {
+                    String pendingLogs = String.valueOf(Silo.getPendingLogAmount());
+                    textViewCount.setText(pendingLogs);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }

@@ -33,7 +33,7 @@
         android:id="@+id/btn_pushLogs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="68dp"
+        android:layout_marginStart="52dp"
         android:layout_marginTop="60dp"
         android:text="push logs"
         app:layout_constraintStart_toStartOf="parent"
@@ -48,4 +48,24 @@
         android:text="Generate 10k logs"
         app:layout_constraintStart_toEndOf="@+id/btn_pushLogs"
         app:layout_constraintTop_toBottomOf="@+id/btn_sendDirectLog" />
+
+    <Button
+        android:id="@+id/btn_viewLogCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="72dp"
+        android:layout_marginEnd="80dp"
+        android:text="LogCOunt"
+        app:layout_constraintEnd_toStartOf="@+id/btn_generateLogs"
+        app:layout_constraintTop_toBottomOf="@+id/btn_pushLogs" />
+
+    <TextView
+        android:id="@+id/textViewCount"
+        android:layout_width="146dp"
+        android:layout_height="112dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginEnd="32dp"
+        android:text="99999"
+        app:layout_constraintEnd_toStartOf="@+id/btn_generateLogs"
+        app:layout_constraintTop_toBottomOf="@+id/btn_viewLogCount" />
 </android.support.constraint.ConstraintLayout>
