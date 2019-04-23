@@ -12,7 +12,9 @@ import org.json.JSONObject;
 import java.sql.Timestamp;
 import java.util.Locale;
 
-
+/**
+ * Logformathelper that formats a logmessage string with additional information
+ */
 public class LogFormatHelper implements LogFormat {
     private String androidId;
     private boolean sendAsJSONString;
@@ -24,6 +26,14 @@ public class LogFormatHelper implements LogFormat {
         this.sendAsJSONString = sendAsJSONString;
     }
 
+    /**
+     * Gets the formated Log message with additional information
+     *
+     * @param logLevel The loglevel
+     * @param tag      Is used to identifiy the source of the message
+     * @param message  Logmessage
+     * @return A string or a formatedJSON string @see sendAsJsonString
+     */
     public String getFormattedLogString(int logLevel, String tag, String message) {
         Timestamp time = new Timestamp(System.currentTimeMillis());
         Long timeStamp = time.getTime();
@@ -37,9 +47,9 @@ public class LogFormatHelper implements LogFormat {
             androidId = "android_id_not_set";
         }
         if (sendAsJSONString) {
-            JSONObject jsonObject = null;
+            JSONObject jsonObject = new JSONObject();
             try {
-                jsonObject = new JSONObject()
+                jsonObject
                         .put("TimeStamp", time)
                         .put("DeviceID", androidId)
                         .put("AppID", appId)
@@ -58,12 +68,18 @@ public class LogFormatHelper implements LogFormat {
 
             return jsonObject.toString();
         } else {
-            return String.format("%d | %s | %s | %s | %s | %s | [%s / %s]: %s",
+
+            return String.format(Locale.US, "%d | %s | %s | %s | %s | %s | [%s / %s]: %s",
                     timeStamp, androidId, appId, appVersionName, currentDeviceLanguage, osVersion, logLevelString, tag, message);
         }
     }
 
-
+    /**
+     * Helper method to get the correct loglevel name
+     *
+     * @param logLevel Loglevel
+     * @return Loglevel name
+     */
     private static String getLogLevelName(int logLevel) {
         String logLevelString;
         switch (logLevel) {

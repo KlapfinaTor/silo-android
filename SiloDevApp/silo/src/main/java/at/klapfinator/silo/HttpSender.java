@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A HTTPSender that sends a List of Log messages to a external Server
+ */
 class HttpSender implements LogSender {
     private static final String TAG = "Silo";
     private String url;
@@ -33,6 +36,7 @@ class HttpSender implements LogSender {
 
     /**
      * Sends the logfiles to a HTTP Server with a POST Request.
+     *
      * @param logDataList The List of Logs to send.
      */
     @Override

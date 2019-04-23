@@ -41,7 +41,7 @@ public final class Silo {
      * @param context The current context.
      */
     public static void initialize(@NonNull Context context) {
-        initialize(context, new LogFormatHelper(context, true), logSender, false, 100);
+        initialize(context, new LogFormatHelper(context, false), logSender, false, 100);
     }
 
     /**
