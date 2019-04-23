@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         //Silo
         Silo.initialize(MainActivity.this);
         Silo.setUrl("http://192.168.1.105:3000/index");
-        Silo.i("Silo test message 1");
+        Silo.setLogCatOutputEnabled(true);
 
         setContentView(R.layout.activity_main);
 

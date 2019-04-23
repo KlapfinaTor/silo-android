@@ -47,7 +47,7 @@ class HttpSender implements LogSender {
             StringRequestHelper stringRequest = new StringRequestHelper(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String response) {
-                    Log.i("Silo", "Response from http: " + response);
+                    Silo.d(TAG, "Response from http: " + response);
                     List<Long> logsToDelete = new ArrayList<>();
 
                     for (DeviceLogData log : logDataList) {
@@ -62,7 +62,7 @@ class HttpSender implements LogSender {
             }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    Log.e(TAG, "Error while sending logs with httpSender: " + error);
+                    Silo.e(TAG, "Error while sending logs with httpSender: " + error);
                 }
             }, logDataList) {
                 @Override
@@ -78,7 +78,7 @@ class HttpSender implements LogSender {
             Volley.newRequestQueue(context).add(stringRequest);
 
         } catch (Exception e) {
-            Log.e(TAG, "Excpetion occured while sending POST Request", e);
+            Silo.e(TAG, "Excpetion occured while sending POST Request", e);
         }
     }
 }

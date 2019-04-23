@@ -17,8 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public final class Silo {
-
-
     private static boolean logCatOutputEnabled;
     private static final String TAG = "Silo";
     private static Context context;
@@ -33,6 +31,11 @@ public final class Silo {
         // none
     }
 
+    /**
+     * Initializes the Silo Logger with default settings.
+     *
+     * @param context
+     */
     public static void initialize(@NonNull Context context) {
         initialize(context, new LogFormatHelper(context), logSender, false, 30);
     }
@@ -193,7 +196,6 @@ public final class Silo {
                 DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
                 for (Long log : logsToDelete) {
                     dao.deleteLogById(log);
-                    Log.d(TAG, "Deleting Log with id: " + log);
                 }
             }
         });
@@ -215,7 +217,7 @@ public final class Silo {
         if (Silo.logSender == null) {
             // Create a HttpSender as default when no other Sender is initialized!
             logSender = new HttpSender(url, context);
-            Log.i(TAG, "Http LogSender initialized!");
+            Silo.i(TAG, "Http LogSender initialized!");
         }
 
         AsyncTask.execute(new Runnable() {
@@ -226,10 +228,7 @@ public final class Silo {
                 try {
                     logsList = Silo.getSpecificAmountOfLogsAsList(getBatchLogSize());
                 } catch (Exception e) {
-                    Log.e(TAG, exceptionToString(e));
-                }
-                for (DeviceLogData log : logsList) {
-                    Log.e(TAG, "LogID: " + log.getId());
+                    Silo.e(TAG, exceptionToString(e));
                 }
                 logSender.pushLogs(logsList);
             }
@@ -298,7 +297,7 @@ public final class Silo {
         try {
             logAmount = getLogAmountInDatabase();
         } catch (Exception e) {
-            Log.e(TAG, exceptionToString(e));
+            Silo.e(TAG, exceptionToString(e));
         }
         return logAmount;
     }
@@ -332,7 +331,7 @@ public final class Silo {
                     logsList.add(log);
 
                 } catch (Exception e) {
-                    Log.e(TAG, exceptionToString(e));
+                    Silo.e(TAG, exceptionToString(e));
                 }
                 logSender.pushLogs(logsList);
             }
