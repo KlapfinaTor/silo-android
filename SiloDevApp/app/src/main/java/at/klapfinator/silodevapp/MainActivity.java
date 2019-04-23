@@ -7,10 +7,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.util.concurrent.ExecutionException;
-
-import at.klapfinator.silo.LogFormatHelper;
 import at.klapfinator.silo.Silo;
 
 public class MainActivity extends AppCompatActivity {
@@ -34,8 +30,6 @@ public class MainActivity extends AppCompatActivity {
         Button btnPushLogs = findViewById(R.id.btn_pushLogs);
         btnViewLogCount = findViewById(R.id.btn_viewLogCount);
         textViewCount = findViewById(R.id.textViewCount);
-
-        //LogFormatHelper logFormatHelper = new LogFormatHelper(this);
 
         btnGenerateLogs.setOnClickListener(new View.OnClickListener() {
             @Override

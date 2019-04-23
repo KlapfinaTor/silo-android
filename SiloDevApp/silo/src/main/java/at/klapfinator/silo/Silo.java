@@ -34,12 +34,21 @@ public final class Silo {
     /**
      * Initializes the Silo Logger with default settings.
      *
-     * @param context
+     * @param context The current context.
      */
     public static void initialize(@NonNull Context context) {
-        initialize(context, new LogFormatHelper(context), logSender, false, 30);
+        initialize(context, new LogFormatHelper(context, false), logSender, false, 30);
     }
 
+    /**
+     * Initializes the Silo logger.
+     *
+     * @param context             The current context.
+     * @param logFormatHelper     The LogformatHelper which will be used.
+     * @param logSender           The logsender which will be used to send the logs (DEFAULT HTTP)
+     * @param logCatOutputEnabled Specifies if the logs will be passed through to logcat when logged
+     * @param batchLogSize        The amount of logs that will be send when the push() method is called.
+     */
     public static void initialize(@NonNull Context context, LogFormatHelper logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled, int batchLogSize) {
         Silo.context = context.getApplicationContext();
         Silo.logSender = logSender;
@@ -258,7 +267,7 @@ public final class Silo {
     private static DeviceLogData getLogById(final long logId) throws ExecutionException, InterruptedException {
         Callable<DeviceLogData> callable = new Callable<DeviceLogData>() {
             @Override
-            public DeviceLogData call() throws Exception {
+            public DeviceLogData call() {
                 DeviceLogDataDao dao = DeviceLogDatabaseAccess.getDatabase(context).deviceLogDataDao();
                 return dao.getLogById(logId);
             }

@@ -6,24 +6,28 @@ import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.sql.Timestamp;
 import java.util.Locale;
 
 
-public class LogFormatHelper {
+public class LogFormatHelper implements LogFormat {
     private String androidId;
+    private boolean sendAsJSONString;
 
     @SuppressLint("HardwareIds")
-    public LogFormatHelper(Context context) {
+    public LogFormatHelper(Context context, boolean sendAsJSONString) {
         Context mContext = context.getApplicationContext();
         androidId = Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
+        this.sendAsJSONString = sendAsJSONString;
     }
 
-    String getFormattedLogString(int logLevel, String tag, String message) {
+    public String getFormattedLogString(int logLevel, String tag, String message) {
         Timestamp time = new Timestamp(System.currentTimeMillis());
         Long timeStamp = time.getTime();
         String appVersionName = BuildConfig.VERSION_NAME;
-        int appVersion = BuildConfig.VERSION_CODE;
         String appId = BuildConfig.APPLICATION_ID;
         String osVersion = "Android-" + Build.VERSION.RELEASE;
         String logLevelString = getLogLevelName(logLevel);
@@ -32,10 +36,33 @@ public class LogFormatHelper {
         if (androidId == null) {
             androidId = "android_id_not_set";
         }
+        if (sendAsJSONString) {
+            JSONObject jsonObject = null;
+            try {
+                jsonObject = new JSONObject()
+                        .put("TimeStamp", time)
+                        .put("DeviceID", androidId)
+                        .put("AppID", appId)
+                        .put("AppVersionName", appVersionName)
+                        .put("DeviceLanguage", currentDeviceLanguage)
+                        .put("OSVersion", osVersion)
+                        .put("LogMessage", new JSONObject()
+                                .put("LogLevel", logLevelString)
+                                .put("TAG", tag)
+                                .put("Message", message
+                                )
+                        );
+            } catch (JSONException e) {
+                Silo.e(Log.getStackTraceString(e));
+            }
 
-        return String.format("%d | %s | %s | %s | %s | %s | [%s / %s]: %s",
-                timeStamp, androidId, appId, appVersionName, currentDeviceLanguage, osVersion, logLevelString, tag, message);
+            return jsonObject.toString();
+        } else {
+            return String.format("%d | %s | %s | %s | %s | %s | [%s / %s]: %s",
+                    timeStamp, androidId, appId, appVersionName, currentDeviceLanguage, osVersion, logLevelString, tag, message);
+        }
     }
+
 
     private static String getLogLevelName(int logLevel) {
         String logLevelString;

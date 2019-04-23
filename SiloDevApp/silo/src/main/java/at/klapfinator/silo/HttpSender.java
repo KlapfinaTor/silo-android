@@ -4,7 +4,6 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -21,11 +20,21 @@ class HttpSender implements LogSender {
     private String url;
     private Context context;
 
+    /**
+     * Initializes the HTTP Logsender.
+     *
+     * @param url     The URL to a server for sending the logs.
+     * @param context The current Context.
+     */
     HttpSender(String url, Context context) {
         this.url = url;
         this.context = context;
     }
 
+    /**
+     * Sends the logfiles to a HTTP Server with a POST Request.
+     * @param logDataList The List of Logs to send.
+     */
     @Override
     public void pushLogs(final List<DeviceLogData> logDataList) {
         //dont try to push a empty list
@@ -66,7 +75,7 @@ class HttpSender implements LogSender {
                 }
             }, logDataList) {
                 @Override
-                protected Map<String, String> getParams() throws AuthFailureError {
+                protected Map<String, String> getParams() {
                     Map<String, String> postMap = new HashMap<>();
 
                     for (DeviceLogData log : listData) {
