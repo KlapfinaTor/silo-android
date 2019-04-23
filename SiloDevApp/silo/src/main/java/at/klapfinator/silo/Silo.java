@@ -21,7 +21,7 @@ public final class Silo {
     private static final String TAG = "Silo";
     private static Context context;
     private static LogSender logSender;
-    private static LogFormatHelper logFormatHelper;
+    private static LogFormat logFormatHelper;
     private static String url;
     private static int batchLogSize;
     private static int logLevel = 5; //WARNING
@@ -33,11 +33,15 @@ public final class Silo {
 
     /**
      * Initializes the Silo Logger with default settings.
+     * +HTTPServer
+     * +LogFormatHelper witch saves the log messages as json string
+     * +Output to Logcat is disabled
+     * +Batchlogsize is 100
      *
      * @param context The current context.
      */
     public static void initialize(@NonNull Context context) {
-        initialize(context, new LogFormatHelper(context, false), logSender, false, 30);
+        initialize(context, new LogFormatHelper(context, true), logSender, false, 100);
     }
 
     /**
@@ -49,7 +53,7 @@ public final class Silo {
      * @param logCatOutputEnabled Specifies if the logs will be passed through to logcat when logged
      * @param batchLogSize        The amount of logs that will be send when the push() method is called.
      */
-    public static void initialize(@NonNull Context context, LogFormatHelper logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled, int batchLogSize) {
+    public static void initialize(@NonNull Context context, LogFormat logFormatHelper, LogSender logSender, Boolean logCatOutputEnabled, int batchLogSize) {
         Silo.context = context.getApplicationContext();
         Silo.logSender = logSender;
         Silo.logFormatHelper = logFormatHelper;
