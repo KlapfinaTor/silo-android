@@ -16,6 +16,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+/**
+ * The Simple Logger
+ */
 public final class Silo {
     private static boolean logCatOutputEnabled;
     private static final String TAG = "Silo";
@@ -27,6 +30,9 @@ public final class Silo {
     private static int logLevel = 2; //VERBOSE
 
 
+    /**
+     * Empty constructor
+     */
     private Silo() {
         // none
     }
@@ -41,7 +47,7 @@ public final class Silo {
      * @param context The current context.
      */
     public static void initialize(@NonNull Context context) {
-        initialize(context, new LogFormatHelper(context, false), logSender, false, 100);
+        initialize(context, new LogFormatHelper(context, false), logSender, true, 100);
     }
 
     /**
