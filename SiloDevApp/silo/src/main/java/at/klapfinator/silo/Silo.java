@@ -24,7 +24,7 @@ public final class Silo {
     private static LogFormat logFormatHelper;
     private static String url;
     private static int batchLogSize;
-    private static int logLevel = 5; //WARNING
+    private static int logLevel = 2; //VERBOSE
 
 
     private Silo() {
@@ -130,7 +130,7 @@ public final class Silo {
 
     /**
      * Sets the loglevel. All logs that are lower then the loglevel will not be logged.
-     * The default loglevel is WARNING(5).
+     * The default loglevel is VERBOSE(2).
      * <ul>
      * <li>{@link Log#VERBOSE}</li>
      * <li>{@link Log#DEBUG}</li>
