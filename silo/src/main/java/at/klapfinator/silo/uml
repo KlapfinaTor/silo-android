@@ -1,0 +1,13 @@
+@startuml
+
+class Silo {
+{method} initialize
+}
+
+class Test {
+
+}
+
+
+
+@enduml
