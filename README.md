@@ -3,7 +3,70 @@
 
 
 ## Overview
-A simple Android remote logger.
+A simple Android remote logger. Its build ontop of the standard Log class. The library saves the logentries into a database. The developer has the option to push the saved logs to an external server.
+
+
+
+## Download
+Download the latest version from Github.
+
+
+## Initialize
+Inside the onCreate Method in your Application
+
+```
+Silo.initialize(context);
+```
+
+
+## Usage
+```
+Silo.i(TAG,"A Info Log");
+```
+
+
+## Send Logs to a Remote Server
+
+First, set a URL before calling the `Silo.push()` method.
+
+```
+Silo.setUrl("API URL");
+```
+After that you can push the saved logs with calling:
+
+```
+Silo.push():
+```
+
+You can also directly send a message to the specified endpoint without calling push(). This will only send the one logmessage that you specified. The saved logs in the database wont be pushed.
+
+```
+Silo.send("Direct Message");
+```
+---
+## Additional Methods
+
+Sets the size in which the logs will be pushed to the remote server.
+```
+Silo.setBatchLogSize(500);
+```
+
+Set to true if you also want the logoutput in the Logcat console.
+```
+Silo.setLogCatOutputEnabled(true);
+```
+
+Sets the loglevel.
+```
+Silo.setLogLevel()
+```
+
+Gets the log amount that are stored in the database.
+
+```
+Silo.getPendingLogAmount()
+```
+
 
 ## License
 
